@@ -21,7 +21,7 @@ fi
 echo ""
 echo "Installing server dependencies..."
 cd ~/zap/server
-npm install --production
+npm install --omit=dev
 
 echo ""
 echo "Installing client dependencies and building..."

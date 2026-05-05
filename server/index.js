@@ -77,24 +77,36 @@ app.post("/api/chat", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // Abort the Anthropic stream if the client disconnects mid-response (saves API tokens)
+  const abortController = new AbortController();
+  req.on("close", () => {
+    if (!res.writableEnded) abortController.abort();
+  });
+
   try {
     let fullText = "";
-    const stream = anthropic.messages.stream({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
-      max_tokens: 8096,
-      system: SYSTEM_PROMPT,
-      messages: history.slice(-20), // keep last 20 turns
-    });
+    const stream = anthropic.messages.stream(
+      {
+        model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
+        max_tokens: 8096,
+        system: SYSTEM_PROMPT,
+        messages: history.slice(-20), // keep last 20 turns
+      },
+      { signal: abortController.signal }
+    );
 
     stream.on("text", (text) => {
+      if (res.writableEnded) return;
       fullText += text;
       res.write(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`);
     });
 
     stream.on("message", () => {
       history.push({ role: "assistant", content: fullText });
-      res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
-      res.end();
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+        res.end();
+      }
 
       // Persist summary periodically
       if (history.length % 10 === 0) {
@@ -109,12 +121,17 @@ app.post("/api/chat", async (req, res) => {
     });
 
     stream.on("error", (err) => {
-      res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
-      res.end();
+      if (err.name === "AbortError") return; // client disconnected — nothing to write
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
+        res.end();
+      }
     });
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
-    res.end();
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
+      res.end();
+    }
   }
 });
 
