@@ -138,7 +138,9 @@
   width: 32px;
   border-radius: 6px;
   cursor: pointer;
+  transition: opacity 0.15s;
 }
+.note-add-btn:hover:not(:disabled) { opacity: 0.85; }
 .note-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .note-item {

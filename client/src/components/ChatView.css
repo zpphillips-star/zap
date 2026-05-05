@@ -30,6 +30,7 @@
 .empty-subtitle { font-size: 0.9rem; color: var(--text-dim); }
 
 /* Typing indicator — bouncing dots */
+/* Positioned inside .bubble-wrapper.assistant so it aligns with assistant messages */
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -39,9 +40,6 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   width: fit-content;
-  max-width: 820px;
-  margin: 0 auto;
-  align-self: flex-start;
 }
 
 .typing-indicator span {

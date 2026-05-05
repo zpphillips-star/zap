@@ -63,6 +63,7 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
           placeholder="Ask ZAP anything…"
           rows={1}
           disabled={loading}
+          autoFocus
         />
         <div className="input-actions">
           <button className="clear-btn" onClick={onClear} title="Clear chat" disabled={loading}>

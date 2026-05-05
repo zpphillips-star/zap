@@ -206,8 +206,10 @@ export default function ChatView({ sessionId }: ChatViewProps) {
           return <MessageBubble key={msg.id} message={msg} />;
         })}
         {showTyping && (
-          <div className="typing-indicator">
-            <span /><span /><span />
+          <div className="bubble-wrapper assistant">
+            <div className="typing-indicator">
+              <span /><span /><span />
+            </div>
           </div>
         )}
         <div ref={bottomRef} />
