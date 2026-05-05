@@ -96,13 +96,34 @@ function MarkdownContent({ text, streaming }: { text: string; streaming?: boolea
       if (!btn) return;
       const code = btn.closest(".code-block")?.querySelector("code");
       if (!code) return;
-      navigator.clipboard
-        .writeText(code.innerText)
-        .then(() => {
-          btn.textContent = "✓";
-          setTimeout(() => { btn.textContent = "Copy"; }, 1500);
-        })
-        .catch(() => { btn.textContent = "!"; });
+      const text = code.innerText;
+
+      function markDone() {
+        btn!.textContent = "✓";
+        setTimeout(() => { btn!.textContent = "Copy"; }, 1500);
+      }
+      function markFail() { btn!.textContent = "!"; }
+
+      // navigator.clipboard requires a secure context (HTTPS or localhost).
+      // When ZAP is served over plain HTTP to a remote VM IP, fall back to the
+      // legacy execCommand approach so the copy button still works.
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(markDone).catch(markFail);
+      } else {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          markDone();
+        } catch {
+          markFail();
+        }
+      }
     }
     el.addEventListener("click", handleCopy);
     return () => el.removeEventListener("click", handleCopy);
