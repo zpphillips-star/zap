@@ -127,6 +127,7 @@
   outline: none;
 }
 .note-input:focus { border-color: #444; }
+.note-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .note-add-btn {
   background: var(--accent);
@@ -138,6 +139,7 @@
   border-radius: 6px;
   cursor: pointer;
 }
+.note-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .note-item {
   display: flex;

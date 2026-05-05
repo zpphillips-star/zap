@@ -160,6 +160,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   onChange={e => setNewNote(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && addNote()}
                   placeholder="Add a note…"
+                  disabled={adding}
                 />
                 <button className="note-add-btn" onClick={addNote} disabled={adding}>+</button>
               </div>
