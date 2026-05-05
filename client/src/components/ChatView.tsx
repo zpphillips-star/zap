@@ -1,0 +1,118 @@
+import { useState, useRef, useEffect } from "react";
+import MessageBubble from "./MessageBubble";
+import InputBar from "./InputBar";
+import "./ChatView.css";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  streaming?: boolean;
+}
+
+interface ChatViewProps {
+  sessionId: string;
+}
+
+export default function ChatView({ sessionId }: ChatViewProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function sendMessage(text: string) {
+    if (!text.trim() || loading) return;
+
+    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
+    const assistantId = `a-${Date.now()}`;
+    const assistantMsg: Message = { id: assistantId, role: "assistant", content: "", streaming: true };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, sessionId }),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "chunk") {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: m.content + data.text } : m
+                )
+              );
+            } else if (data.type === "done" || data.type === "error") {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, streaming: false } : m
+                )
+              );
+            }
+          } catch {}
+        }
+      }
+    } catch (err: any) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: `Error: ${err.message}`, streaming: false }
+            : m
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function clearChat() {
+    await fetch("/api/clear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    });
+    setMessages([]);
+  }
+
+  return (
+    <div className="chat-layout">
+      <div className="messages-area">
+        {messages.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">⚡</div>
+            <div className="empty-title">ZAP</div>
+            <div className="empty-subtitle">Your personal AI. What do you need?</div>
+          </div>
+        )}
+        {messages.map((msg) => (
+          <MessageBubble key={msg.id} message={msg} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+      <InputBar onSend={sendMessage} onClear={clearChat} loading={loading} />
+    </div>
+  );
+}
