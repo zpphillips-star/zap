@@ -21,6 +21,35 @@ export default function ChatView({ sessionId }: ChatViewProps) {
   const userScrolledUp = useRef(false);
   const messagesRef = useRef<HTMLDivElement>(null);
 
+  // Restore messages from localStorage on mount (survives page refresh)
+  useEffect(() => {
+    const saved = localStorage.getItem(`zap-messages-${sessionId}`);
+    if (saved) {
+      try {
+        const parsed: Message[] = JSON.parse(saved);
+        // Clear any stuck streaming state from a previous crashed session
+        setMessages(parsed.map((m) => ({ ...m, streaming: false })));
+      } catch {
+        localStorage.removeItem(`zap-messages-${sessionId}`);
+      }
+    }
+  }, [sessionId]);
+
+  // Persist stable (non-streaming) messages to localStorage
+  useEffect(() => {
+    if (messages.length === 0) return; // handled by clearChat explicitly
+    const stable = messages.filter((m) => !m.streaming);
+    if (stable.length === 0) return; // mid-stream, wait for next update
+    try {
+      localStorage.setItem(
+        `zap-messages-${sessionId}`,
+        JSON.stringify(stable.slice(-100)) // cap at 100 messages to stay within quota
+      );
+    } catch {
+      // localStorage quota exceeded — fail silently
+    }
+  }, [messages, sessionId]);
+
   // Smart auto-scroll: only scroll if user is near the bottom
   useEffect(() => {
     if (!userScrolledUp.current) {
@@ -138,6 +167,7 @@ export default function ChatView({ sessionId }: ChatViewProps) {
       body: JSON.stringify({ sessionId }),
     });
     setMessages([]);
+    localStorage.removeItem(`zap-messages-${sessionId}`);
   }
 
   const lastMsg = messages[messages.length - 1];

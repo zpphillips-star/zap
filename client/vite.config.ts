@@ -14,10 +14,18 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor libs into a separate cacheable chunk
-          vendor: ["react", "react-dom"],
-          markdown: ["marked", "dompurify"],
+        // Function form required to match sub-path imports like highlight.js/lib/languages/bash
+        manualChunks(id) {
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
+            return "vendor";
+          }
+          if (
+            id.includes("node_modules/marked") ||
+            id.includes("node_modules/dompurify") ||
+            id.includes("node_modules/highlight.js")
+          ) {
+            return "markdown";
+          }
         },
       },
     },

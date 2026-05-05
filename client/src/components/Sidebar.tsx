@@ -3,6 +3,7 @@ import "./Sidebar.css";
 
 interface Repo { name: string; full_name: string; description: string; url: string; updated_at: string; }
 interface Note { id: number; content: string; created_at: string; }
+interface Health { model: string; github: boolean; status: string; }
 
 interface SidebarProps {
   open: boolean;
@@ -14,9 +15,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
-  const [health, setHealth] = useState<any>(null);
+  const [health, setHealth] = useState<Health | null>(null);
   const [reposLoading, setReposLoading] = useState(false);
   const [reposError, setReposError] = useState<string | null>(null);
+  const [notesError, setNotesError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/health").then(r => r.json()).then(setHealth).catch(() => {});
@@ -36,7 +38,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         .finally(() => setReposLoading(false));
     }
     if (open && tab === "notes") {
-      fetch("/api/notes").then(r => r.json()).then(setNotes).catch(() => {});
+      setNotesError(null);
+      fetch("/api/notes")
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          setNotes(data);
+        })
+        .catch(err => setNotesError(err.message || "Failed to load notes"));
     }
   }, [open, tab]);
 
@@ -113,6 +122,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 />
                 <button className="note-add-btn" onClick={addNote}>+</button>
               </div>
+              {notesError && <div className="error-msg">⚠ {notesError}</div>}
+              {!notesError && notes.length === 0 && (
+                <div className="empty-msg">No notes yet.</div>
+              )}
               {notes.map(n => (
                 <div key={n.id} className="note-item">
                   <span>{n.content}</span>
