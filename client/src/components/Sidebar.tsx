@@ -98,8 +98,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {health && (
           <div className="health-badge">
-            <span className="dot green" /> {health.model}
-            {health.github && <><span className="dot green" style={{marginLeft: "0.5rem"}} /> GitHub</>}
+            <span className="dot green" />
+            <span className="health-model" title={health.model}>
+              {/* Strip "claude-" prefix and date suffix (e.g. "claude-sonnet-4-5-20250929" → "sonnet-4-5") */}
+              {health.model.replace(/^claude-/, "").replace(/-\d{8}$/, "")}
+            </span>
+            {health.github && <><span className="dot green" style={{marginLeft: "0.35rem"}} /> GitHub</>}
           </div>
         )}
 

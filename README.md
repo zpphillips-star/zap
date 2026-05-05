@@ -19,7 +19,7 @@ Personal AI assistant powered by Claude (Anthropic). Clean, fast, no Microsoft d
 ## Install (on your VM)
 
 ```bash
-# Clone the repo
+# Clone the repo (any directory works — installer uses its own location)
 git clone https://github.com/zpphillips-star/zap.git ~/zap
 
 # Run the installer
@@ -45,13 +45,14 @@ Find your VM's IP in the Azure Portal.
 ## Manual start (without PM2)
 
 ```bash
-cd ~/zap/server
+# Run from wherever you cloned the repo
+cd /path/to/zap/server
 node index.js
 ```
 
 ## Configuration
 
-Edit `~/zap/server/.env`:
+Edit `server/.env` inside the clone directory:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...

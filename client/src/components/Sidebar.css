@@ -49,6 +49,15 @@
   font-size: 0.8rem;
   color: var(--text-dim);
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.health-model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .dot {
