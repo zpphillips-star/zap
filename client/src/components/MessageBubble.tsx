@@ -1,3 +1,8 @@
+import { useEffect, useRef } from "react";
+import { marked } from "marked";
+import hljs from "highlight.js";
+import DOMPurify from "dompurify";
+import "highlight.js/styles/github-dark.css";
 import "./MessageBubble.css";
 
 interface Message {
@@ -7,60 +12,38 @@ interface Message {
   streaming?: boolean;
 }
 
-function renderContent(text: string) {
-  // Simple markdown-ish rendering
-  const lines = text.split("\n");
-  const elements: JSX.Element[] = [];
-  let inCode = false;
-  let codeLines: string[] = [];
-  let codeLang = "";
+// Configure marked with highlight.js
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+const renderer = new marked.Renderer();
+renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+  const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
+  const highlighted = hljs.highlight(text, { language }).value;
+  return `<div class="code-block">
+    <span class="code-lang">${language !== "plaintext" ? language : ""}</span>
+    <button class="code-copy-btn" onclick="(function(btn){var code=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(code.innerText).then(function(){btn.textContent='✓';setTimeout(function(){btn.textContent='Copy'},1500)}).catch(function(){btn.textContent='!'});})(this)">Copy</button>
+    <pre><code class="hljs language-${language}">${highlighted}</code></pre>
+  </div>`;
+};
 
-    if (line.startsWith("```")) {
-      if (!inCode) {
-        inCode = true;
-        codeLang = line.slice(3).trim();
-        codeLines = [];
-      } else {
-        elements.push(
-          <pre key={i}>
-            <code>{codeLines.join("\n")}</code>
-          </pre>
-        );
-        inCode = false;
-        codeLines = [];
-      }
-      continue;
+function renderMarkdown(text: string): string {
+  const html = marked.parse(text) as string;
+  return DOMPurify.sanitize(html, { ADD_ATTR: ["onclick"] });
+}
+
+function MarkdownContent({ text, streaming }: { text: string; streaming?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.innerHTML = renderMarkdown(text) + (streaming ? '<span class="cursor">▋</span>' : "");
     }
+  }, [text, streaming]);
 
-    if (inCode) {
-      codeLines.push(line);
-      continue;
-    }
-
-    if (line.startsWith("### ")) {
-      elements.push(<h3 key={i} className="md-h3">{line.slice(4)}</h3>);
-    } else if (line.startsWith("## ")) {
-      elements.push(<h2 key={i} className="md-h2">{line.slice(3)}</h2>);
-    } else if (line.startsWith("# ")) {
-      elements.push(<h1 key={i} className="md-h1">{line.slice(2)}</h1>);
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<li key={i} className="md-li">{line.slice(2)}</li>);
-    } else if (line === "") {
-      elements.push(<div key={i} className="md-spacer" />);
-    } else {
-      // Inline code
-      const parts = line.split(/(`[^`]+`)/);
-      const rendered = parts.map((p, j) =>
-        p.startsWith("`") && p.endsWith("`") ? <code key={j}>{p.slice(1, -1)}</code> : p
-      );
-      elements.push(<p key={i} className="md-p">{rendered}</p>);
-    }
-  }
-
-  return elements;
+  return <div ref={ref} className="bubble-content" />;
 }
 
 export default function MessageBubble({ message }: { message: Message }) {
@@ -71,10 +54,7 @@ export default function MessageBubble({ message }: { message: Message }) {
         {isUser ? (
           <p className="md-p">{message.content}</p>
         ) : (
-          <div className="bubble-content">
-            {renderContent(message.content)}
-            {message.streaming && <span className="cursor">▋</span>}
-          </div>
+          <MarkdownContent text={message.content} streaming={message.streaming} />
         )}
       </div>
     </div>

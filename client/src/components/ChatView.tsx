@@ -18,13 +18,30 @@ export default function ChatView({ sessionId }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  // Smart auto-scroll: only scroll if user is near the bottom
+  useEffect(() => {
+    if (!userScrolledUp.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const el = messagesRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+      userScrolledUp.current = !atBottom;
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
+    userScrolledUp.current = false;
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text };
     const assistantId = `a-${Date.now()}`;
@@ -75,11 +92,12 @@ export default function ChatView({ sessionId }: ChatViewProps) {
           } catch {}
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
-            ? { ...m, content: `Error: ${err.message}`, streaming: false }
+            ? { ...m, content: `Error: ${message}`, streaming: false }
             : m
         )
       );
@@ -97,9 +115,12 @@ export default function ChatView({ sessionId }: ChatViewProps) {
     setMessages([]);
   }
 
+  const lastMsg = messages[messages.length - 1];
+  const showTyping = loading && lastMsg?.content === "" && lastMsg?.streaming;
+
   return (
     <div className="chat-layout">
-      <div className="messages-area">
+      <div className="messages-area" ref={messagesRef}>
         {messages.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">⚡</div>
@@ -110,6 +131,11 @@ export default function ChatView({ sessionId }: ChatViewProps) {
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
+        {showTyping && (
+          <div className="typing-indicator">
+            <span /><span /><span />
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
       <InputBar onSend={sendMessage} onClear={clearChat} loading={loading} />
