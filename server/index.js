@@ -206,6 +206,10 @@ const publicDir = join(__dirname, "public");
 if (existsSync(publicDir)) {
   app.use(express.static(publicDir));
   app.get("*", (req, res) => {
+    // Don't serve index.html for unknown /api/* routes — return proper JSON 404
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({ error: `Unknown API endpoint: ${req.path}` });
+    }
     res.sendFile(join(publicDir, "index.html"));
   });
 }

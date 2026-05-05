@@ -71,7 +71,7 @@ marked.use({
       const highlighted = hljs.highlight(text, { language }).value;
       return `<div class="code-block">
     <span class="code-lang">${language !== "plaintext" ? language : ""}</span>
-    <button class="code-copy-btn" onclick="(function(btn){var code=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(code.innerText).then(function(){btn.textContent='✓';setTimeout(function(){btn.textContent='Copy'},1500)}).catch(function(){btn.textContent='!'});})(this)">Copy</button>
+    <button class="code-copy-btn">Copy</button>
     <pre><code class="hljs language-${language}">${highlighted}</code></pre>
   </div>`;
     },
@@ -80,11 +80,33 @@ marked.use({
 
 function renderMarkdown(text: string): string {
   const html = marked.parse(text) as string;
-  return DOMPurify.sanitize(html, { ADD_ATTR: ["onclick"] });
+  // No ADD_ATTR needed — copy buttons use event delegation (no inline onclick)
+  return DOMPurify.sanitize(html);
 }
 
 function MarkdownContent({ text, streaming }: { text: string; streaming?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+
+  // Event delegation for code copy buttons — avoids inline onclick (XSS risk)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    function handleCopy(e: MouseEvent) {
+      const btn = (e.target as HTMLElement).closest(".code-copy-btn") as HTMLButtonElement | null;
+      if (!btn) return;
+      const code = btn.closest(".code-block")?.querySelector("code");
+      if (!code) return;
+      navigator.clipboard
+        .writeText(code.innerText)
+        .then(() => {
+          btn.textContent = "✓";
+          setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+        })
+        .catch(() => { btn.textContent = "!"; });
+    }
+    el.addEventListener("click", handleCopy);
+    return () => el.removeEventListener("click", handleCopy);
+  }, []); // mount only — delegation handles dynamically injected buttons
 
   useEffect(() => {
     if (ref.current) {
