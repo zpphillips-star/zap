@@ -40,7 +40,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       setReposLoading(true);
       setReposError(null);
       fetch("/api/github/repos", { signal })
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) throw new Error(`Server error: ${r.status}`);
+          return r.json();
+        })
         .then(data => {
           if (data.error) throw new Error(data.error);
           setRepos(data);
@@ -56,7 +59,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       setNotesError(null);
       setNotesLoading(true);
       fetch("/api/notes", { signal })
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) throw new Error(`Server error: ${r.status}`);
+          return r.json();
+        })
         .then(data => {
           if (data.error) throw new Error(data.error);
           setNotes(data);

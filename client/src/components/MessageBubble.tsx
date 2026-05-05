@@ -68,7 +68,24 @@ marked.use({
     code(token: any): string {
       const { text, lang } = token;
       const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
-      const highlighted = hljs.highlight(text, { language }).value;
+      // "plaintext" is not registered with hljs core — escape and return as-is.
+      // Also wrap any unexpected hljs error in a safe fallback so code blocks never crash.
+      let highlighted: string;
+      if (language === "plaintext") {
+        highlighted = text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      } else {
+        try {
+          highlighted = hljs.highlight(text, { language }).value;
+        } catch {
+          highlighted = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        }
+      }
       return `<div class="code-block">
     <span class="code-lang">${language !== "plaintext" ? language : ""}</span>
     <button class="code-copy-btn">Copy</button>
