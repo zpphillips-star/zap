@@ -118,5 +118,7 @@
 }
 
 /* Legacy class compat */
-.md-p { margin: 0; }
+/* pre-wrap preserves Shift+Enter newlines in multi-line user messages;
+   break-word prevents long URLs or strings from overflowing the bubble. */
+.md-p { margin: 0; white-space: pre-wrap; word-break: break-word; }
 
