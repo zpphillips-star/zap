@@ -55,7 +55,7 @@ Edit `~/zap/server/.env`:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-5
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
 GITHUB_TOKEN=ghp_...
 PORT=3001
 ```

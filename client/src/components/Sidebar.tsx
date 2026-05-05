@@ -42,14 +42,20 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
   async function addNote() {
     if (!newNote.trim()) return;
-    const res = await fetch("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: newNote.trim() }),
-    });
-    const note = await res.json();
-    setNotes(prev => [...prev, note]);
-    setNewNote("");
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newNote.trim() }),
+      });
+      if (!res.ok) return;
+      const note = await res.json();
+      if (note.error) return; // guard against unexpected error payload
+      setNotes(prev => [...prev, note]);
+      setNewNote("");
+    } catch {
+      // network error — don't add bad data to state
+    }
   }
 
   async function deleteNote(id: number) {

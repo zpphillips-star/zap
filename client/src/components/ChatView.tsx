@@ -66,7 +66,11 @@ export default function ChatView({ sessionId }: ChatViewProps) {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          // Flush any remaining buffered data so the final SSE event isn't dropped
+          if (buffer.trim()) buffer += "\n";
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");

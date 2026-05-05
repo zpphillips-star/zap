@@ -33,7 +33,13 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
     }
     if (e.key === "Escape") {
       e.preventDefault();
-      onClear();
+      // If there's text in the input, clear the input first.
+      // Only clear the whole chat if the input is already empty.
+      if (value.trim()) {
+        setValue("");
+      } else {
+        onClear();
+      }
     }
   }
 
