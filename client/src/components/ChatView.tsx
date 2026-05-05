@@ -64,18 +64,9 @@ export default function ChatView({ sessionId }: ChatViewProps) {
       const decoder = new TextDecoder();
       let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          // Flush any remaining buffered data so the final SSE event isn't dropped
-          if (buffer.trim()) buffer += "\n";
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
+      // Helper to parse and apply SSE lines from a buffer string
+      function processSSELines(raw: string) {
+        const lines = raw.split("\n");
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
           try {
@@ -103,6 +94,22 @@ export default function ChatView({ sessionId }: ChatViewProps) {
             }
           } catch {}
         }
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          // Flush TextDecoder internal state (handles multi-byte UTF-8 split across chunks)
+          buffer += decoder.decode();
+          // Process any SSE events that were buffered but not yet applied
+          if (buffer.trim()) processSSELines(buffer);
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        processSSELines(lines.join("\n"));
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
