@@ -133,13 +133,22 @@ app.post("/api/chat", async (req, res) => {
     });
 
     stream.on("error", (err) => {
-      if (err.name === "AbortError") return; // client disconnected — nothing to write
+      if (err.name === "AbortError") {
+        // Client disconnected mid-stream — push whatever we streamed so far so history stays balanced
+        if (fullText) history.push({ role: "assistant", content: fullText });
+        else history.pop(); // no assistant response at all — remove the dangling user message
+        return;
+      }
+      // Push a placeholder so history stays balanced (user msg is already in history)
+      history.push({ role: "assistant", content: `[Error: ${err.message}]` });
       if (!res.writableEnded) {
         res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
         res.end();
       }
     });
   } catch (err) {
+    // Error before stream started — user message is already in history, remove it to stay balanced
+    history.pop();
     if (!res.writableEnded) {
       res.write(`data: ${JSON.stringify({ type: "error", text: err.message })}\n\n`);
       res.end();
