@@ -20,6 +20,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [reposError, setReposError] = useState<string | null>(null);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -71,7 +72,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   }, [open, tab]);
 
   async function addNote() {
-    if (!newNote.trim()) return;
+    if (!newNote.trim() || adding) return;
+    setAdding(true);
     setNotesError(null);
     try {
       const res = await fetch("/api/notes", {
@@ -92,6 +94,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       setNewNote("");
     } catch {
       setNotesError("Failed to save note — check your connection");
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -157,7 +161,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   onKeyDown={e => e.key === "Enter" && addNote()}
                   placeholder="Add a note…"
                 />
-                <button className="note-add-btn" onClick={addNote}>+</button>
+                <button className="note-add-btn" onClick={addNote} disabled={adding}>+</button>
               </div>
               {notesLoading && <div className="empty-msg">Loading notes…</div>}
               {notesError && <div className="error-msg">⚠ {notesError}</div>}

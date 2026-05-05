@@ -103,6 +103,8 @@
   transition: opacity 0.15s, color 0.15s;
 }
 .code-block:hover .code-copy-btn { opacity: 1; }
+/* Always show copy button on touch devices (no hover) */
+@media (hover: none) { .code-copy-btn { opacity: 1; } }
 .code-copy-btn:hover { color: var(--accent); border-color: var(--accent); }
 
 .cursor {
