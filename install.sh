@@ -65,7 +65,11 @@ if ! command -v pm2 &>/dev/null; then
 fi
 
 cd "$SCRIPT_DIR/server"
-pm2 describe zap > /dev/null 2>&1 && pm2 restart zap || pm2 start index.js --name zap
+if pm2 describe zap > /dev/null 2>&1; then
+  pm2 restart zap
+else
+  pm2 start index.js --name zap
+fi
 pm2 save
 # Configure pm2 to auto-start on reboot (capture the command pm2 prints and run it)
 STARTUP_CMD=$(pm2 startup 2>&1 | grep "sudo" | tail -1)
