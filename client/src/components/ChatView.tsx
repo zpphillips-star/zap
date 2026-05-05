@@ -198,9 +198,13 @@ export default function ChatView({ sessionId }: ChatViewProps) {
             <div className="empty-subtitle">Your personal AI. What do you need?</div>
           </div>
         )}
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
+        {messages.map((msg) => {
+          // Skip empty streaming assistant bubbles — the typing indicator handles
+          // that state. Without this, both an empty bubble (with cursor) and the
+          // bouncing dots render simultaneously, which looks broken.
+          if (msg.role === "assistant" && !msg.content && msg.streaming) return null;
+          return <MessageBubble key={msg.id} message={msg} />;
+        })}
         {showTyping && (
           <div className="typing-indicator">
             <span /><span /><span />

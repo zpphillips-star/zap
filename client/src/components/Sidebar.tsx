@@ -28,32 +28,46 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   }, [open]);
 
   useEffect(() => {
+    // Create a single AbortController per effect run so that if `open` or `tab`
+    // changes while a fetch is in-flight, the cleanup function cancels it and we
+    // never apply stale results to the wrong tab's state.
+    const controller = new AbortController();
+    const { signal } = controller;
+
     if (open && tab === "github") {
       setRepos([]);           // clear stale data so old repos don't show alongside loading indicator
       setReposLoading(true);
       setReposError(null);
-      fetch("/api/github/repos")
+      fetch("/api/github/repos", { signal })
         .then(r => r.json())
         .then(data => {
           if (data.error) throw new Error(data.error);
           setRepos(data);
         })
-        .catch(err => setReposError(err.message || "Failed to load repos"))
+        .catch(err => {
+          if (err.name === "AbortError") return; // component unmounted or tab switched — ignore
+          setReposError(err.message || "Failed to load repos");
+        })
         .finally(() => setReposLoading(false));
     }
     if (open && tab === "notes") {
       setNotes([]);           // clear stale data before re-syncing from server
       setNotesError(null);
       setNotesLoading(true);
-      fetch("/api/notes")
+      fetch("/api/notes", { signal })
         .then(r => r.json())
         .then(data => {
           if (data.error) throw new Error(data.error);
           setNotes(data);
         })
-        .catch(err => setNotesError(err.message || "Failed to load notes"))
+        .catch(err => {
+          if (err.name === "AbortError") return;
+          setNotesError(err.message || "Failed to load notes");
+        })
         .finally(() => setNotesLoading(false));
     }
+
+    return () => controller.abort(); // cancel any in-flight fetch on cleanup
   }, [open, tab]);
 
   async function addNote() {
