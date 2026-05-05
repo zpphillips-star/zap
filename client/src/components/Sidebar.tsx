@@ -15,6 +15,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [health, setHealth] = useState<any>(null);
+  const [reposLoading, setReposLoading] = useState(false);
+  const [reposError, setReposError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/health").then(r => r.json()).then(setHealth).catch(() => {});
@@ -22,7 +24,16 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
   useEffect(() => {
     if (open && tab === "github") {
-      fetch("/api/github/repos").then(r => r.json()).then(setRepos).catch(() => {});
+      setReposLoading(true);
+      setReposError(null);
+      fetch("/api/github/repos")
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          setRepos(data);
+        })
+        .catch(err => setReposError(err.message || "Failed to load repos"))
+        .finally(() => setReposLoading(false));
     }
     if (open && tab === "notes") {
       fetch("/api/notes").then(r => r.json()).then(setNotes).catch(() => {});
@@ -70,7 +81,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="sidebar-content">
           {tab === "github" && (
             <div className="repo-list">
-              {repos.length === 0 && <div className="empty-msg">No repos found or GitHub not connected.</div>}
+              {reposLoading && <div className="empty-msg">Loading repos…</div>}
+              {reposError && <div className="error-msg">⚠ {reposError}</div>}
+              {!reposLoading && !reposError && repos.length === 0 && (
+                <div className="empty-msg">No repos found or GitHub not connected.</div>
+              )}
               {repos.map(r => (
                 <a key={r.full_name} href={r.url} target="_blank" rel="noreferrer" className="repo-item">
                   <div className="repo-name">{r.name}</div>

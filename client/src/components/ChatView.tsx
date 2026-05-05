@@ -82,10 +82,18 @@ export default function ChatView({ sessionId }: ChatViewProps) {
                   m.id === assistantId ? { ...m, content: m.content + data.text } : m
                 )
               );
-            } else if (data.type === "done" || data.type === "error") {
+            } else if (data.type === "done") {
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId ? { ...m, streaming: false } : m
+                )
+              );
+            } else if (data.type === "error") {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: (m.content || "") + `\n\n⚠ Error: ${data.text}`, streaming: false }
+                    : m
                 )
               );
             }
@@ -103,6 +111,12 @@ export default function ChatView({ sessionId }: ChatViewProps) {
       );
     } finally {
       setLoading(false);
+      // Guarantee streaming cursor is cleared even if done SSE event was still in unprocessed buffer
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId ? { ...m, streaming: false } : m
+        )
+      );
     }
   }
 

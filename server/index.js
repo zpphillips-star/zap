@@ -5,7 +5,7 @@ import { Octokit } from "@octokit/rest";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 
 dotenv.config();
 
@@ -27,10 +27,19 @@ const MEMORY_FILE = join(__dirname, "memory.json");
 if (!existsSync(MEMORY_FILE)) writeFileSync(MEMORY_FILE, JSON.stringify({ conversations: [], notes: [] }));
 
 function loadMemory() {
-  return JSON.parse(readFileSync(MEMORY_FILE, "utf8"));
+  try {
+    return JSON.parse(readFileSync(MEMORY_FILE, "utf8"));
+  } catch {
+    // Return safe default if file is missing or corrupted
+    return { conversations: [], notes: [] };
+  }
 }
 function saveMemory(data) {
-  writeFileSync(MEMORY_FILE, JSON.stringify(data, null, 2));
+  try {
+    writeFileSync(MEMORY_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error("Failed to save memory:", err.message);
+  }
 }
 
 // ─── System prompt ────────────────────────────────────────────────────────────
@@ -153,8 +162,11 @@ app.get("/api/notes", (req, res) => {
 
 app.post("/api/notes", (req, res) => {
   const { content } = req.body;
+  if (!content || typeof content !== "string" || !content.trim()) {
+    return res.status(400).json({ error: "content required" });
+  }
   const memory = loadMemory();
-  const note = { id: Date.now(), content, created_at: new Date().toISOString() };
+  const note = { id: Date.now(), content: content.trim(), created_at: new Date().toISOString() };
   memory.notes.push(note);
   saveMemory(memory);
   res.json(note);

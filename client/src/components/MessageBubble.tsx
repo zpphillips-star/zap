@@ -12,22 +12,27 @@ interface Message {
   streaming?: boolean;
 }
 
-// Configure marked with highlight.js
-marked.setOptions({
+// Configure marked using the extension API (v12+) — renderer + options in one call
+// Using `any` for the token parameter because marked v12 TypeScript types still
+// declare the old Renderer.code(code, infostring, escaped) signature, but at runtime
+// passes a token object { text, lang }. The extension renderer API accepts the token form.
+marked.use({
   breaks: true,
   gfm: true,
-});
-
-const renderer = new marked.Renderer();
-renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
-  const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
-  const highlighted = hljs.highlight(text, { language }).value;
-  return `<div class="code-block">
+  renderer: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    code(token: any): string {
+      const { text, lang } = token;
+      const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
+      const highlighted = hljs.highlight(text, { language }).value;
+      return `<div class="code-block">
     <span class="code-lang">${language !== "plaintext" ? language : ""}</span>
     <button class="code-copy-btn" onclick="(function(btn){var code=btn.closest('.code-block').querySelector('code');navigator.clipboard.writeText(code.innerText).then(function(){btn.textContent='✓';setTimeout(function(){btn.textContent='Copy'},1500)}).catch(function(){btn.textContent='!'});})(this)">Copy</button>
     <pre><code class="hljs language-${language}">${highlighted}</code></pre>
   </div>`;
-};
+    },
+  },
+});
 
 function renderMarkdown(text: string): string {
   const html = marked.parse(text) as string;

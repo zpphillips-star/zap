@@ -12,7 +12,7 @@ Personal AI assistant powered by Claude (Anthropic). Clean, fast, no Microsoft d
 ## Requirements
 
 - Ubuntu 20.04+ (or any Linux)
-- Node.js 18+ (installer handles this)
+- Node.js 20+ (installer handles this)
 - Anthropic API key
 - GitHub Personal Access Token (optional)
 

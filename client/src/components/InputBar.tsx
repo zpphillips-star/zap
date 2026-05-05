@@ -11,6 +11,7 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -18,10 +19,21 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
     }
   }, [value]);
 
+  // Refocus input when loading finishes
+  useEffect(() => {
+    if (!loading) {
+      textareaRef.current?.focus();
+    }
+  }, [loading]);
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submit();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClear();
     }
   }
 
@@ -59,7 +71,7 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
           </button>
         </div>
       </div>
-      <div className="input-hint">Enter to send · Shift+Enter for new line</div>
+      <div className="input-hint">Enter to send · Shift+Enter for new line · Esc to clear</div>
     </div>
   );
 }
