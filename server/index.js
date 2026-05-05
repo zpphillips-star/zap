@@ -58,7 +58,22 @@ Keep responses concise unless detail is specifically needed.
 You remember things the user tells you about themselves and their projects.`;
 
 // ─── Conversation history (in-memory per session, persisted to file) ──────────
-const sessions = new Map(); // sessionId -> messages[]
+const sessions = new Map();       // sessionId -> messages[]
+const sessionLastUsed = new Map(); // sessionId -> Date.now() ms timestamp
+
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours of inactivity → evict
+
+// Purge sessions idle for more than SESSION_TTL_MS.
+// Runs every 6 hours; .unref() lets Node exit cleanly without waiting for this timer.
+setInterval(() => {
+  const cutoff = Date.now() - SESSION_TTL_MS;
+  for (const [id, ts] of sessionLastUsed) {
+    if (ts < cutoff) {
+      sessions.delete(id);
+      sessionLastUsed.delete(id);
+    }
+  }
+}, 6 * 60 * 60 * 1000).unref();
 
 function getOrCreateSession(sessionId) {
   if (!sessions.has(sessionId)) {
@@ -70,6 +85,7 @@ function getOrCreateSession(sessionId) {
     }
     sessions.set(sessionId, context ? [{ role: "user", content: context }, { role: "assistant", content: "Got it, I remember." }] : []);
   }
+  sessionLastUsed.set(sessionId, Date.now()); // refresh TTL on every access
   return sessions.get(sessionId);
 }
 
@@ -160,6 +176,7 @@ app.post("/api/chat", async (req, res) => {
 app.post("/api/clear", (req, res) => {
   const { sessionId = "default" } = req.body;
   sessions.delete(sessionId);
+  sessionLastUsed.delete(sessionId);
   res.json({ ok: true });
 });
 

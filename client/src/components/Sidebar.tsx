@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./Sidebar.css";
 
-interface Repo { name: string; full_name: string; description: string; url: string; updated_at: string; }
+interface Repo { name: string; full_name: string; description: string | null; url: string; updated_at: string; }
 interface Note { id: number; content: string; created_at: string; }
 interface Health { model: string; github: boolean; status: string; }
 
