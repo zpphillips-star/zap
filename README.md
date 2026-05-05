@@ -60,9 +60,26 @@ GITHUB_TOKEN=ghp_...
 PORT=3001
 ```
 
-## Open port 3001 on Azure
+## Open port 3001 on Azure (REQUIRED)
 
-In Azure Portal → Your VM → Networking → Add inbound port rule → Port 3001, TCP.
+**This step is mandatory or ZAP won't load in your browser.**
+
+1. Go to [portal.azure.com](https://portal.azure.com)
+2. Find your VM → click **Networking** in the left sidebar
+3. Click **Add inbound port rule**
+4. Set: **Destination port = 3001**, Protocol = TCP, Action = Allow
+5. Hit **Add**
+
+Then open `http://YOUR_VM_IP:3001` in any browser.
+
+## If ZAP stops after a VM reboot
+
+SSH into the VM and run:
+```bash
+pm2 list          # check if ZAP is running
+pm2 restart zap   # restart it
+pm2 startup       # copy/run the command it prints to auto-start forever
+```
 
 ## Tech stack
 
