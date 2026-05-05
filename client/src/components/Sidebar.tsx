@@ -22,8 +22,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [notesError, setNotesError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/health").then(r => r.json()).then(setHealth).catch(() => {});
-  }, []);
+    if (open) {
+      fetch("/api/health").then(r => r.json()).then(setHealth).catch(() => {});
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && tab === "github") {

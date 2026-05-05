@@ -107,10 +107,14 @@ app.post("/api/chat", async (req, res) => {
       if (res.writableEnded) return;
       fullText += text;
       res.write(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`);
+      // Flush immediately — prevents buffering by compression middleware or reverse proxies
+      res.flush?.();
     });
 
     stream.on("message", () => {
       history.push({ role: "assistant", content: fullText });
+      // Trim in-memory history to prevent unbounded growth on long-running sessions
+      if (history.length > 100) history.splice(0, history.length - 100);
       if (!res.writableEnded) {
         res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
         res.end();
