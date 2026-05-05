@@ -8,6 +8,10 @@ echo "⚡ ZAP Installer"
 echo "================"
 echo ""
 
+# Resolve the directory containing this script so paths work regardless of where
+# the repo was cloned (e.g. ~/zap, ~/zap-build, ~/my-zap, etc.)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # ── Check Node.js ────────────────────────────────────────────────────────────
 if ! command -v node &>/dev/null; then
   echo "Installing Node.js 20..."
@@ -20,17 +24,17 @@ fi
 # ── Install dependencies ─────────────────────────────────────────────────────
 echo ""
 echo "Installing server dependencies..."
-cd ~/zap/server
+cd "$SCRIPT_DIR/server"
 npm install --omit=dev
 
 echo ""
 echo "Installing client dependencies and building..."
-cd ~/zap/client
+cd "$SCRIPT_DIR/client"
 npm install
 npm run build
 
 # ── .env setup ───────────────────────────────────────────────────────────────
-cd ~/zap/server
+cd "$SCRIPT_DIR/server"
 if [ ! -f .env ]; then
   echo ""
   echo "Setting up environment..."
@@ -49,7 +53,7 @@ fi
 
 # ── Serve static files from built client ─────────────────────────────────────
 # Add static file serving to the server (production mode)
-if [ ! -d ~/zap/server/public ]; then
+if [ ! -d "$SCRIPT_DIR/server/public" ]; then
   echo "Warning: client build not found in server/public"
 fi
 
@@ -60,7 +64,7 @@ if ! command -v pm2 &>/dev/null; then
   sudo npm install -g pm2
 fi
 
-cd ~/zap/server
+cd "$SCRIPT_DIR/server"
 pm2 describe zap > /dev/null 2>&1 && pm2 restart zap || pm2 start index.js --name zap
 pm2 save
 # Configure pm2 to auto-start on reboot (capture the command pm2 prints and run it)

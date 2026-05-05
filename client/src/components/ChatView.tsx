@@ -79,11 +79,16 @@ export default function ChatView({ sessionId }: ChatViewProps) {
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setLoading(true);
 
+    // Abort if the server stops responding — protects against infinite loading state
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 120_000); // 120s max
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, sessionId }),
+        signal: abortController.signal,
       });
 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
@@ -141,7 +146,12 @@ export default function ChatView({ sessionId }: ChatViewProps) {
         processSSELines(lines.join("\n"));
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message =
+        err instanceof Error
+          ? err.name === "AbortError"
+            ? "Request timed out — server may be down or overloaded"
+            : err.message
+          : "Unknown error";
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -150,6 +160,7 @@ export default function ChatView({ sessionId }: ChatViewProps) {
         )
       );
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
       // Guarantee streaming cursor is cleared even if done SSE event was still in unprocessed buffer
       setMessages((prev) =>

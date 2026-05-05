@@ -18,6 +18,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [health, setHealth] = useState<Health | null>(null);
   const [reposLoading, setReposLoading] = useState(false);
   const [reposError, setReposError] = useState<string | null>(null);
+  const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,31 +40,40 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     }
     if (open && tab === "notes") {
       setNotesError(null);
+      setNotesLoading(true);
       fetch("/api/notes")
         .then(r => r.json())
         .then(data => {
           if (data.error) throw new Error(data.error);
           setNotes(data);
         })
-        .catch(err => setNotesError(err.message || "Failed to load notes"));
+        .catch(err => setNotesError(err.message || "Failed to load notes"))
+        .finally(() => setNotesLoading(false));
     }
   }, [open, tab]);
 
   async function addNote() {
     if (!newNote.trim()) return;
+    setNotesError(null);
     try {
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newNote.trim() }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setNotesError("Failed to save note — server returned an error");
+        return;
+      }
       const note = await res.json();
-      if (note.error) return; // guard against unexpected error payload
+      if (note.error) {
+        setNotesError(note.error);
+        return;
+      }
       setNotes(prev => [...prev, note]);
       setNewNote("");
     } catch {
-      // network error — don't add bad data to state
+      setNotesError("Failed to save note — check your connection");
     }
   }
 
@@ -127,8 +137,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 />
                 <button className="note-add-btn" onClick={addNote}>+</button>
               </div>
+              {notesLoading && <div className="empty-msg">Loading notes…</div>}
               {notesError && <div className="error-msg">⚠ {notesError}</div>}
-              {!notesError && notes.length === 0 && (
+              {!notesLoading && !notesError && notes.length === 0 && (
                 <div className="empty-msg">No notes yet.</div>
               )}
               {notes.map(n => (
