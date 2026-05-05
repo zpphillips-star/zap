@@ -37,6 +37,7 @@
 }
 
 .input-textarea::placeholder { color: var(--text-dim); }
+.input-textarea:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .input-actions {
   display: flex;
@@ -60,6 +61,7 @@
   transition: all 0.15s;
 }
 .clear-btn:hover:not(:disabled) { color: var(--text); border-color: #444; }
+.clear-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .send-btn {
   background: var(--accent);

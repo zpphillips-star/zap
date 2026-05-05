@@ -1,6 +1,7 @@
 .app-layout {
   display: flex;
-  height: 100vh;
+  height: 100vh;    /* fallback */
+  height: 100dvh;   /* dynamic viewport height — prevents mobile browser chrome overlap */
   overflow: hidden;
 }
 
