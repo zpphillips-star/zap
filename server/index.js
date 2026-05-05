@@ -12,6 +12,14 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// ─── Startup validation ───────────────────────────────────────────────────────
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("❌  ANTHROPIC_API_KEY is not set.");
+  console.error("    Copy server/.env.example to server/.env and add your Anthropic API key.");
+  console.error("    ZAP cannot start without it.");
+  process.exit(1);
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());

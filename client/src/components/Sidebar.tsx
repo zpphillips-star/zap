@@ -27,6 +27,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
   useEffect(() => {
     if (open && tab === "github") {
+      setRepos([]);           // clear stale data so old repos don't show alongside loading indicator
       setReposLoading(true);
       setReposError(null);
       fetch("/api/github/repos")
@@ -39,6 +40,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         .finally(() => setReposLoading(false));
     }
     if (open && tab === "notes") {
+      setNotes([]);           // clear stale data before re-syncing from server
       setNotesError(null);
       setNotesLoading(true);
       fetch("/api/notes")

@@ -76,7 +76,7 @@ fi
 echo ""
 echo "✅ ZAP is running!"
 echo ""
-echo "   Open your browser to: http://$(curl -s ifconfig.me):3001"
+echo "   Open your browser to: http://$(curl -s --connect-timeout 3 --max-time 5 ifconfig.me || echo "<YOUR_VM_IP>"):3001"
 echo "   (or http://localhost:3001 if accessing from the VM itself)"
 echo ""
 echo "   To check status: pm2 status"
