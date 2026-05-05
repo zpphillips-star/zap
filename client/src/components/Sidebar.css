@@ -141,6 +141,14 @@
   gap: 0.5rem;
 }
 
+.note-item span {
+  /* Prevent long note text from overflowing the 300px sidebar */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .note-del-btn {
   background: none;
   border: none;

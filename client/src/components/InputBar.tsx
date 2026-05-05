@@ -34,10 +34,11 @@ export default function InputBar({ onSend, onClear, loading }: InputBarProps) {
     if (e.key === "Escape") {
       e.preventDefault();
       // If there's text in the input, clear the input first.
-      // Only clear the whole chat if the input is already empty.
+      // Only clear the whole chat if the input is already empty AND not loading.
+      // Clearing during an active stream would leave loading=true with no messages visible.
       if (value.trim()) {
         setValue("");
-      } else {
+      } else if (!loading) {
         onClear();
       }
     }
