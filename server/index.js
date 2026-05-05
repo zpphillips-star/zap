@@ -80,7 +80,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     let fullText = "";
     const stream = anthropic.messages.stream({
-      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5",
+      model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929",
       max_tokens: 8096,
       system: SYSTEM_PROMPT,
       messages: history.slice(-20), // keep last 20 turns
@@ -181,7 +181,7 @@ app.delete("/api/notes/:id", (req, res) => {
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5", github: !!process.env.GITHUB_TOKEN });
+  res.json({ status: "ok", model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929", github: !!process.env.GITHUB_TOKEN });
 });
 
 // ─── Serve built React app (production) ───────────────────────────────────────
@@ -197,6 +197,6 @@ if (existsSync(publicDir)) {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`⚡ ZAP server running on http://localhost:${PORT}`);
-  console.log(`   Model: ${process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5"}`);
+  console.log(`   Model: ${process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929"}`);
   console.log(`   GitHub: ${process.env.GITHUB_TOKEN ? "✓ connected" : "✗ no token"}`);
 });

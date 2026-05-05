@@ -12,5 +12,14 @@ export default defineConfig({
   build: {
     outDir: "../server/public",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor libs into a separate cacheable chunk
+          vendor: ["react", "react-dom"],
+          markdown: ["marked", "dompurify"],
+        },
+      },
+    },
   },
 });

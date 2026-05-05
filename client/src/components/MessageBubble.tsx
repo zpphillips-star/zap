@@ -1,9 +1,53 @@
 import { useEffect, useRef } from "react";
 import { marked } from "marked";
-import hljs from "highlight.js";
+// Import only highlight.js core + common languages to keep bundle small
+// Full hljs import would be ~900KB; this subset covers ~95% of real usage
+import hljs from "highlight.js/lib/core";
+import langBash from "highlight.js/lib/languages/bash";
+import langC from "highlight.js/lib/languages/c";
+import langCpp from "highlight.js/lib/languages/cpp";
+import langCss from "highlight.js/lib/languages/css";
+import langDiff from "highlight.js/lib/languages/diff";
+import langGo from "highlight.js/lib/languages/go";
+import langJava from "highlight.js/lib/languages/java";
+import langJs from "highlight.js/lib/languages/javascript";
+import langJson from "highlight.js/lib/languages/json";
+import langMarkdown from "highlight.js/lib/languages/markdown";
+import langPython from "highlight.js/lib/languages/python";
+import langRust from "highlight.js/lib/languages/rust";
+import langShell from "highlight.js/lib/languages/shell";
+import langSql from "highlight.js/lib/languages/sql";
+import langTs from "highlight.js/lib/languages/typescript";
+import langXml from "highlight.js/lib/languages/xml";
+import langYaml from "highlight.js/lib/languages/yaml";
 import DOMPurify from "dompurify";
 import "highlight.js/styles/github-dark.css";
 import "./MessageBubble.css";
+
+// Register languages with the core instance
+hljs.registerLanguage("bash", langBash);
+hljs.registerLanguage("c", langC);
+hljs.registerLanguage("cpp", langCpp);
+hljs.registerLanguage("css", langCss);
+hljs.registerLanguage("diff", langDiff);
+hljs.registerLanguage("go", langGo);
+hljs.registerLanguage("java", langJava);
+hljs.registerLanguage("javascript", langJs);
+hljs.registerLanguage("js", langJs);
+hljs.registerLanguage("json", langJson);
+hljs.registerLanguage("markdown", langMarkdown);
+hljs.registerLanguage("python", langPython);
+hljs.registerLanguage("py", langPython);
+hljs.registerLanguage("rust", langRust);
+hljs.registerLanguage("sh", langShell);
+hljs.registerLanguage("shell", langShell);
+hljs.registerLanguage("sql", langSql);
+hljs.registerLanguage("ts", langTs);
+hljs.registerLanguage("typescript", langTs);
+hljs.registerLanguage("xml", langXml);
+hljs.registerLanguage("html", langXml);
+hljs.registerLanguage("yaml", langYaml);
+hljs.registerLanguage("yml", langYaml);
 
 interface Message {
   id: string;
