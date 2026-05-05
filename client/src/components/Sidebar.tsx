@@ -68,8 +68,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   }
 
   async function deleteNote(id: number) {
-    await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    // Optimistic update — remove from UI immediately; server failure is recoverable on next load
     setNotes(prev => prev.filter(n => n.id !== id));
+    try {
+      await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    } catch {
+      // Network error — note will reappear on next sidebar open (re-fetch from server)
+    }
   }
 
   return (

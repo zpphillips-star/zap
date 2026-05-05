@@ -161,11 +161,15 @@ export default function ChatView({ sessionId }: ChatViewProps) {
   }
 
   async function clearChat() {
-    await fetch("/api/clear", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId }),
-    });
+    try {
+      await fetch("/api/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+    } catch {
+      // Server unreachable — clear UI anyway; server session will be fresh on reconnect
+    }
     setMessages([]);
     localStorage.removeItem(`zap-messages-${sessionId}`);
   }
