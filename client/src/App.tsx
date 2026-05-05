@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ChatView from "./components/ChatView";
 import Sidebar from "./components/Sidebar";
 import "./App.css";
@@ -15,6 +15,16 @@ function getOrCreateSessionId(): string {
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sessionId] = useState(getOrCreateSessionId);
+
+  // Close sidebar on Escape key (sidebar takes priority over input Escape handler)
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSidebarOpen(false);
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [sidebarOpen]);
 
   return (
     <div className="app-layout">
